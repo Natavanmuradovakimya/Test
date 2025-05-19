@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kimya Test Sistemi</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #e4efff;
+    margin: 0; padding: 0;
+  }
+  .container {
+    max-width: 800px;
+    width: 95vw;
+    background: white;
+    margin: 30px auto;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  h2 {
+    text-align: center;
+    color: #003366;
+    margin-bottom: 20px;
+  }
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  button {
+    background-color: #0077ff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+  }
+  button:hover {
+    background-color: #005fd6;
+  }
+  label {
+    margin-right: 15px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .question-block {
+    background: #f0f7ff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 5px solid #0077ff;
+    border-radius: 8px;
+  }
+  #result h3 {
+    color: green;
+    text-align: center;
+  }
+  #previewQuestions, #studentResults {
+    max-height: 220px;
+    overflow-y: auto;
+    background: #f9fbff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: 15px;
+  }
+  #previewQuestions p, #studentResults p {
+    margin: 6px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+  }
+  #previewQuestions button, #studentResults button {
+    background: none;
+    border: none;
+    color: #d33;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+  }
+  #previewQuestions button:hover, #studentResults button:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 480px) {
+    .container {
+      padding: 15px;
+      margin: 15px 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<script>
+  let MUELLIM_KODU = "muellim123";
+  let SAGIRD_KODU = "sagird456";
+</script>
+
+<!-- Login bölməsi -->
+<div class="container" id="login">
+  <h2>Test Sistemə Giriş</h2>
+  <input type="password" id="accessCode" placeholder="Kod daxil et" />
+  <button onclick="login()">Daxil ol</button>
+</div>
+
+<!-- Müəllim üçün sual redaktoru -->
+<div class="container" id="editor" style="display:none;">
+  <h2>Yeni Sual Əlavə Et (Müəllim)</h2>
+  <input type="text" id="qText" placeholder="Sualı daxil edin" />
+  <input type="text" id="optA" placeholder="Variant A" />
+  <input type="text" id="optB" placeholder="Variant B" />
+  <input type="text" id="optC" placeholder="Variant C" />
+  <input type="text" id="optD" placeholder="Variant D" />
+  <p><b>Düzgün cavab:</b></p>
+  <label><input type="radio" name="correct" value="a" /> A</label>
+  <label><input type="radio" name="correct" value="b" /> B</label>
+  <label><input type="radio" name="correct" value="c" /> C</label>
+  <label><input type="radio" name="correct" value="d" /> D</label>
+  <br />
+  <button onclick="addQuestion()">Sual əlavə et</button>
+  <button onclick="saveQuestions()">Hamısını yadda saxla</button>
+
+  <h3>Sualların Preview-si</h3>
+  <div id="previewQuestions"></div>
+
+  <h3>Şagird Nəticələri</h3>
+  <div id="studentResults"></div>
+</div>
+
+<!-- Şagird giriş -->
+<div class="container" id="studentLogin" style="display:none;">
+  <h2>Şagird Məlumatı</h2>
+  <input type="text" id="studentName" placeholder="Adınızı daxil edin" />
+  <button onclick="startTest()">Teste Başla</button>
+</div>
+
+<!-- Test -->
+<div class="container" id="test" style="display:none;">
+  <h2>Kimya Testi</h2>
+  <form id="quizForm"></form>
+  <button onclick="checkAnswers()">Nəticəyə Bax</button>
+  <div id="result"></div>
+</div>
+
+<script>
+  const loginDiv = document.getElementById("login");
+  const editorDiv = document.getElementById("editor");
+  const studentLogin = document.getElementById("studentLogin");
+  const testDiv = document.getElementById("test");
+  const resultDiv = document.getElementById("result");
+  const quizForm = document.getElementById("quizForm");
+  const previewQuestions = document.getElementById("previewQuestions");
+  const studentResults = document.getElementById("studentResults");
+
+  // Default suallar (müəllim dəyişə bilər)
+  let teacherQuestions = [
+    {
+      sual: "Hansı element suyun kimyəvi formuludur?",
+      a: "H2O",
+      b: "CO2",
+      c: "O2",
+      d: "N2",
+      duzgun: "a"
+    },
+    {
+      sual: "Atomun mərkəzində nə yerləşir?",
+      a: "Elektronlar",
+      b: "Protonlar və neytronlar",
+      c: "Molekullar",
+      d: "İonlar",
+      duzgun: "b"
+    }
+  ];
+
+  // Şagird nəticələri localStorage-da saxlanacaq
+  // Struktur: { ad: "Şagird adı", ball: 2, toplam: 3 }
+
+  function login() {
+    const code = document.getElementById("accessCode").value.trim();
+    if (code === MUELLIM_KODU) {
+      loginDiv.style.display = "none";
+      editorDiv.style.display = "block";
+      loadQuestions();
+      showPreview();
+      showStudentResults();
+    } else if (code === SAGIRD_KODU) {
+      loginDiv.style.display = "none";
+      studentLogin.style.display = "block";
+    } else {
+      alert("Kod yanlışdır!");
+    }
+  }
+
+  function addQuestion() {
+    const sual = document.getElementById("qText").value.trim();
+    const a = document.getElementById("optA").value.trim();
+    const b = document.getElementById("optB").value.trim();
+    const c = document.getElementById("optC").value.trim();
+    const d = document.getElementById("optD").value.trim();
+    const duzgunRadio = document.querySelector('input[name="correct"]:checked');
+
+    if (!sual || !a || !b || !c || !d || !duzgunRadio) {
+      alert("Zəhmət olmasa bütün sahələri doldurun və düzgün cavabı seçin!");
+      return;
+    }
+
+    teacherQuestions.push({
+      sual: sual,
+      a: a,
+      b: b,
+      c: c,
+      d: d,
+      duzgun: duzgunRadio.value
+    });
+
+    clearInputs();
+    showPreview();
+  }
+
+  function clearInputs() {
+    document.getElementById("qText").value = "";
+    document.getElementById("optA").value = "";
+    document.getElementById("optB").value = "";
+    document.getElementById("optC").value = "";
+    document.getElementById("optD").value = "";
+    const checked = document.querySelector('input[name="correct"]:checked');
+    if (checked) checked.checked = false;
+  }
+
+  function showPreview() {
+    if (teacherQuestions.length === 0) {
+      previewQuestions.innerHTML = "<p>Suallar əlavə olunmayıb.</p>";
+      return;
+    }
+
+    let html = "";
+    teacherQuestions.forEach((q, i) => {
+      html += `
+      <div class="question-block">
+        <p><b>${i+1}. ${q.sual}</b></p>
+        <p>A) ${q.a}</p>
+        <p>B) ${q.b}</p>
+        <p>C) ${q.c}</p>
+        <p>D) ${q.d}</p>
+        <p><i>Düzgün cavab: ${q.duzgun.toUpperCase()}</i></p>
+        <button onclick="deleteQuestion(${i})">Sil</button>
+      </div>`;
+    });
+
+    previewQuestions.innerHTML = html;
+  }
+
+  function deleteQuestion(index) {
+    if (confirm("Bu sualı silmək istəyirsiniz?")) {
+      teacherQuestions.splice(index, 1);
+      showPreview();
+    }
+  }
+
+  function saveQuestions() {
+    localStorage.setItem("testData", JSON.stringify(teacherQuestions));
+    alert("Suallar yadda saxlanıldı!");
+  }
+
+  function loadQuestions() {
+    const saved = localStorage.getItem("testData");
+    if (saved) {
+      try {
+        teacherQuestions = JSON.parse(saved);
+      } catch {
+        teacherQuestions = [];
+      }
+    }
+  }
+
+  function showStudentResults() {
+    const results = JSON.parse(localStorage.getItem("studentResults") || "[]");
+    if (results.length === 0) {
+      studentResults.innerHTML = "<p>Hələ heç bir nəticə yoxdur.</p>";
+      return;
+    }
+    let html = "";
+    results.forEach((res, i) => {
+      html += `<p>${i+1}. ${res.ad} - ${res.ball} / ${res.toplam} <button onclick="deleteResult(${i})">Sil</button></p>`;
+    });
+    studentResults.innerHTML = html;
+  }
+
+  function deleteResult(index) {
+    const results = JSON.parse(localStorage.getItem("studentResults") || "[]");
+    results.splice(index, 1);
+    localStorage.setItem("studentResults", JSON.stringify(results));
+    showStudentResults();
+  }
+
+  // Şagird test başlayır
+  function startTest() {
+    const name = document.getElementById("studentName").value.trim();
+    if (!name) {
+      alert("Zəhmət olmasa adınızı daxil edin.");
+      return;
+    }
+    studentLogin.style.display = "none";
+    testDiv.style.display = "block";
+    renderTest();
+  }
+
+  function renderTest() {
+    let html = "";
+    teacherQuestions.forEach((q, i) => {
+      html += `
+      <div class="question-block">
+        <p><b>${i+1}. ${q.sual}</b></p>
+        <label><input type="radio" name="q${i}" value="a" /> A) ${q.a}</label><br />
+        <label><input type="radio" name="q${i}" value="b" /> B) ${q.b}</label><br />
+        <label><input type="radio" name="q${i}" value="c" /> C) ${q.c}</label><br />
+        <label><input type="radio" name="q${i}" value="d" /> D) ${q.d}</label>
+      </div>`;
+    });
+    quizForm.innerHTML = html;
+    resultDiv.innerHTML = "";
+  }
+
+  function checkAnswers() {
+    let score = 0;
+    for(let i = 0; i < teacherQuestions.length; i++) {
+      const selected = document.querySelector(`input[name="q${i}"]:checked`);
+      if (selected && selected.value === teacherQuestions[i].duzgun) {
+        score++;
+      }
+    }
+    const name = document.getElementById("studentName").value.trim();
+
+    resultDiv.innerHTML = `<h3>${name}, siz ${score} / ${teacherQuestions.length} doğru cavab verdiniz!</h3>`;
+
+    saveResult(name, score, teacherQuestions.length);
+  }
+
+  function saveResult(ad, ball, toplam) {
+    let results = JSON.parse(localStorage.getItem("studentResults") || "[]");
+    results.push({ad, ball, toplam});
+    localStorage.setItem("studentResults", JSON.stringify(results));
+  }
+</script>
+
+</body>
+</html>
