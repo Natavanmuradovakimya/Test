@@ -101,7 +101,7 @@
   const MUELLIM_KODU = "muellim123";
 
   function getSagirdKodu() {
-    return localStorage.getItem("sagirdKodu") || "Nihad";
+    return localStorage.getItem("sagirdKodu") || "sagird456";
   }
 
   let SAGIRD_KODU = getSagirdKodu();
@@ -159,7 +159,32 @@
   const previewQuestions = document.getElementById("previewQuestions");
   const studentResults = document.getElementById("studentResults");
 
-  let teacherQuestions = [];
+  let teacherQuestions = [
+  {
+    sual: "Kimyanın əsas elementləri hansılardır?",
+    a: "Su, hava, torpaq",
+    b: "Karbon, hidrogen, oksigen",
+    c: "Qızıl, gümüş, mis",
+    d: "Duz, şəkər, spirt",
+    duzgun: "b"
+  },
+  {
+    sual: "H2SO4 kimyəvi formulu hansı maddəyə aiddir?",
+    a: "Suyun",
+    b: "Sirkə turşusunun",
+    c: "Sulfur turşusunun",
+    d: "Natrium hidroksidin",
+    duzgun: "c"
+  },
+  {
+    sual: "Atomun nüvəsində nə yerləşir?",
+    a: "Elektronlar",
+    b: "Proton və neytronlar",
+    c: "Molekullar",
+    d: "İonlar",
+    duzgun: "b"
+  }
+];
 
   function login() {
     const code = document.getElementById("accessCode").value.trim();
@@ -197,12 +222,12 @@
       return;
     }
     teacherQuestions.push({
-      sual: Nihad,
+      sual: sual,
       a: a,
       b: b,
       c: c,
       d: d,
-      duzgun: a .value
+      duzgun: duzgunRadio.value
     });
     showPreview();
     clearInputs();
